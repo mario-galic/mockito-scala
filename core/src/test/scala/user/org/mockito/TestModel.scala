@@ -23,6 +23,8 @@ class Foo {
   def returnsValueCaseClass: ValueCaseClass = ValueCaseClass(-1)
 
   def returnsValueCaseClass(i: Int): ValueCaseClass = ValueCaseClass(i)
+
+  def baz(i: Int, b: Baz2): String = "not mocked"
 }
 
 class Bar {

@@ -1,9 +1,11 @@
 package user.org.mockito
 
 import org.mockito.captor.ArgCaptor
+import org.mockito.exceptions.verification.ArgumentsAreDifferent
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.{ CallsRealMethods, DefaultAnswer, ScalaFirstStubbing }
 import org.mockito.{ ArgumentMatchersSugar, MockitoSugar }
+import org.scalactic.Prettifier
 import org.scalatest.prop.TableDrivenPropertyChecks
 import org.scalatest.{ EitherValues, Matchers, OptionValues, WordSpec }
 import user.org.mockito.matchers.ValueCaseClass
@@ -17,6 +19,13 @@ class MockitoSugarTest
     with EitherValues
     with OptionValues
     with TableDrivenPropertyChecks {
+
+  implicit val prettifier: Prettifier = new Prettifier {
+    override def apply(o: Any): String = o match {
+      case Baz2(_, s) => s"PrettifiedBaz($s)"
+      case other      => Prettifier.default(other)
+    }
+  }
 
   val scenarios = Table(
     ("testDouble", "foo", "higherKinded", "concreteHigherKinded", "fooWithBaz", "baz", "parametrisedTraitInt"),
@@ -239,6 +248,21 @@ class MockitoSugarTest
         aMock.traitMethod(4) shouldBe ValueCaseClass(42)
         aMock.traitMethod(4) shouldBe ValueCaseClass(43)
       }
+
+      "use Prettifier for the arguments" in {
+        val aMock = foo()
+
+        aMock.baz(42, Baz2(69, "hola"))
+
+        val e = the[ArgumentsAreDifferent] thrownBy {
+          verify(aMock).baz(42, Baz2(69, "chau"))
+        }
+
+        e.getMessage should include("Argument(s) are different! Wanted:")
+        e.getMessage should include("foo.baz(42, PrettifiedBaz(hola));")
+        e.getMessage should include("Actual invocation has different arguments:")
+        e.getMessage should include("foo.baz(42, PrettifiedBaz(chau));")
+      }
     }
   }
 
@@ -285,7 +309,7 @@ class MockitoSugarTest
       verify(aMock).traitMethod(30)
     }
 
-    "should stop the user passing traits in the settings" in {
+    "stop the user passing traits in the settings" in {
       a[IllegalArgumentException] should be thrownBy {
         mock[Foo](withSettings.extraInterfaces(classOf[Baz]))
       }
