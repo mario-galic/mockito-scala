@@ -26,10 +26,17 @@ lazy val commonSettings =
       "-deprecation:false",
       "-encoding", "UTF-8",
       "-Xfatal-warnings",
-      "-Ypartial-unification",
       "-language:reflectiveCalls,implicitConversions,experimental.macros,higherKinds",
 //      "-Xmacro-settings:mockito-print-when,mockito-print-do-something,mockito-print-verify,mockito-print-captor,mockito-print-matcher,mockito-print-extractor,mockito-print-lenient"
     ),
+    scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, v)) if v <= 12 =>
+          Seq("-Ypartial-unification")
+        case _ =>
+          Nil
+      }
+    }
   )
 
 lazy val publishSettings = Seq(
@@ -58,27 +65,27 @@ lazy val commonLibraries = Seq(
 )
 
 lazy val scalatest = (project in file("scalatest"))
-    .dependsOn(core)
-    .dependsOn(common % "compile-internal, test-internal")
-    .dependsOn(macroSub % "compile-internal, test-internal")
-    .settings(
-      name := "mockito-scala-scalatest",
-      commonSettings,
-      publishSettings,
-      libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.6-SNAP6" % "provided",
-    )
+  .dependsOn(core)
+  .dependsOn(common % "compile-internal, test-internal")
+  .dependsOn(macroSub % "compile-internal, test-internal")
+  .settings(
+    name := "mockito-scala-scalatest",
+    commonSettings,
+    publishSettings,
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.6-SNAP6" % "provided",
+  )
 
 lazy val specs2 = (project in file("specs2"))
-    .dependsOn(core)
-    .dependsOn(common % "compile-internal, test-internal")
-    .dependsOn(macroSub % "compile-internal, test-internal")
-    .settings(
-      name := "mockito-scala-specs2",
-      commonSettings,
-      publishSettings,
-      libraryDependencies += "org.specs2" %% "specs2-core" % "4.4.1" % "provided",
-      libraryDependencies += "org.hamcrest" % "hamcrest-core" % "1.3" % "provided",
-    )
+  .dependsOn(core)
+  .dependsOn(common % "compile-internal, test-internal")
+  .dependsOn(macroSub % "compile-internal, test-internal")
+  .settings(
+    name := "mockito-scala-specs2",
+    commonSettings,
+    publishSettings,
+    libraryDependencies += "org.specs2"   %% "specs2-core"  % "4.4.1" % "provided",
+    libraryDependencies += "org.hamcrest" % "hamcrest-core" % "1.3"   % "provided",
+  )
 
 lazy val common = (project in file("common"))
   .dependsOn(macroCommon)
